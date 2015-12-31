@@ -1,9 +1,9 @@
 ---
 author: Hardy Jones
 categories: programming
-date:   2015-12-29 03:22:03
+date:   2015-12-31 14:23:50
 layout: post
-title: Comonads and Monoids
+title: Comonads, Monoids and Trees
 ---
 
 ## Table of Contents
