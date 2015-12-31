@@ -9,18 +9,18 @@ title: Lenses and Virtual DOM Support Open Closed
 N.B. Some knowledge of van Laarhoven lenses, [ramda][ramda], and [virtual-dom][virtual-dom] is assumed.
 This post will not go over the specifics of those.
 
-# Table of contents
+## Table of contents
 
-* [Introduction](#introduction)
-* [Goal](#goal)
-* [Simple Radio](#simple-radio)
-* [Lenses](#lenses)
-* [Easier alternative](#easier-alternative)
-* [Complex Radio](#complex-radio)
-* [Compare Complex Solutions](#compare-complex-solutions)
-* [Wrap Up](#wrap-up)
+1. [Introduction](#introduction)
+1. [Goal](#goal)
+1. [Simple Radio](#simple-radio)
+1. [Lenses](#lenses)
+1. [Easier alternative](#easier-alternative)
+1. [Complex Radio](#complex-radio)
+1. [Compare Complex Solutions](#compare-complex-solutions)
+1. [Wrap Up](#wrap-up)
 
-# Introduction
+## Introduction
 
 Here is a *hypothetical* scenario:
 
@@ -58,7 +58,7 @@ Well, there are a number of ways.
   This is similar to the first suggestion, except you do not have to update every call site.
   But this is probably the last thing you want in a large js code base with no tests.
 
-# Goal
+## Goal
 
 There are many other things you could also do.
 I would like to explore one specific option: using lenses to follow The Open/Closed Principle.
@@ -119,7 +119,7 @@ It is more verbose for sure,
 but simple examples rarely show the benefits of an abstraction,
 so stick with me on this one.
 
-# Simple Radio
+## Simple Radio
 
 How does this help solve our original problem?
 First, let's take a look at a simplified version.
@@ -183,7 +183,7 @@ This field is an object that will correspond to the attributes of the actual DOM
 Notice we have the properties: `checked`, `type`, and `value`.
 We need some way to add another property: `disabled`.
 
-# Lenses
+## Lenses
 
 This is where lenses come in.
 Ramda provides a couple of simple lenses for two common tasks:
@@ -278,7 +278,7 @@ So, we have a software entity (`radio`) that is open for extension,
 but closed for modification.
 If that does not epitomize The Open/Closed Principle, I am not sure what does.
 
-# Easier alternative
+## Easier alternative
 
 But wait, did we really need to bring lenses in for this, or are we just being esoteric?
 I will admit for this simple example, the full power of lenses is a bit unwarranted.
@@ -338,7 +338,7 @@ VirtualNode {
 
 And mutation for the sake of easiness is not a trade-off we should be willing to make.
 
-# Complex Radio
+## Complex Radio
 
 The real power of lenses shows itself when the object is quite a bit more nested.
 So let's make a slightly more complex example.
@@ -537,7 +537,7 @@ VirtualNode {
   descendantHooks: false }
 ```
 
-# Compare Complex Solutions
+## Compare Complex Solutions
 
 You might object to the fact that we used previously defined lenses.
 We could do similar with the mutation version:
@@ -585,7 +585,7 @@ set(lensProp('foo'), 13, {foo: 3}); //=> {foo: 13}
 over(lensProp('foo'), add(10), {foo: 3}); //=> {foo: 13}
 ```
 
-# Wrap Up
+## Wrap Up
 
 Well, both solutions satisfied The Open/Closed Principle so we met that goal,
 but was it worthwhile to bring lenses in?
