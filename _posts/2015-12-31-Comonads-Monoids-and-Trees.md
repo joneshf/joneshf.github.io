@@ -551,8 +551,6 @@ Once again, we can see it in action:
 
 And once again, we see that the refactoring worked!
 
-One final thing to note is
-
 ## Conclusion
 
 Was it worth it implement the `Any` data type?
