@@ -553,7 +553,7 @@ And once again, we see that the refactoring worked!
 
 ## Conclusion
 
-Was it worth it implement the `Any` data type?
+Was it worth it to implement the `Any` data type?
 From the perspective of having to pass around what should be implicit arguments,
 I would say no.
 However, I can give a very real example of when this comes in handy.
