@@ -88,7 +88,7 @@ function Leaf(val, ann) {
     toString: () => `Leaf(${val}, ${ann})`,
   };
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return {
     ann: ann,
@@ -109,7 +109,8 @@ we can make a `Functor` from `Tree val`.
 We choose to make the `Functor` over the `ann` variable,
 since this is the one we care about in the solution to the problem.
 
-The intuition for wanting a `Functor` in the solution comes from recognizing that we are probably going to want to apply some function uniformly across all nodes in the tree.
+The intuition for wanting a `Functor` in the solution comes from recognizing
+that we are probably going to want to apply some function uniformly across all nodes in the tree.
 For instance, we might want to adjust every annotation in the tree all at once.
 Or if we have a subtree, we might want to adjust all those nodes at once.
 Recognizing that we can apply a function to all the values in the tree uniformly is the main take away here.
@@ -124,7 +125,7 @@ function Leaf(val, ann) {
     map: f => Leaf(val, f(ann)),
   };
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return {
     ann: ann,
@@ -165,15 +166,19 @@ we can map everything to `false` so any new changes that are made can be tracked
 
 We need a way to propagate annotations through the branches of a tree.
 
-Say we make our annotation a boolean where `false` implies unchanged, and `true` implies changed.
+Say we make our annotation a boolean where `false` implies unchanged,
+and `true` implies changed.
 In the real world, we would want to use a more descriptive data type than boolean,
 but for the sake of brevity, we stick with boolean.
-When a child has been annotated `true`, the parent should also be annotated `true`.
-Or thinking about it another way, to determine a parent's annotation, we must know the annotation of the children.
+When a child has been annotated `true`,
+the parent should also be annotated `true`.
+Or thinking about it another way,
+to determine a parent's annotation, we must know the annotation of the children.
 
 If we modify some leaf or branch in a tree and want to propagate the change upwards, what can we do?
 We could write some specific algorithm that works only for booleans.
-While this would solve the problem, it would have to be rewritten somehow if we change the annotation.
+While this would solve the problem,
+it would have to be rewritten somehow if we change the type of annotation.
 
 A slightly more interesting solution is to look towards comonads.
 In this solution we can stop before we get the full power of a comonad.
@@ -196,7 +201,7 @@ function Leaf(val, ann) {
     extend: f => Leaf(val, f(Leaf(val, ann))),
   };
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return {
     ann: ann,
@@ -210,11 +215,15 @@ function Branch(left, right, ann) {
 }
 ```
 
+Notice that we always pass an entire `Tree val ann` to the given function.
+It takes the `Tree val ann` and produces a single value.
 I am willing to bet that it is not immediately clear how this is helpful.
-Bear with me for a bit.
+We will come back to that later, so bear with me for a bit.
 
-Well, what if we had some function that took a `Tree` and returned a boolean that said whether or not any of the nodes had been updated?
-If we had this function, we could pass it to `extend`, and it would change all the annotations to reflect that.
+What if we had some function that took a `Tree` and
+returned a boolean that said whether or not any of the nodes had been updated?
+If we had this function, we could pass it to `extend`,
+and it would change all the annotations to reflect that.
 
 So let us think about that function.
 
@@ -222,7 +231,9 @@ How do you know if a `Leaf` is changed?
 The `ann` tells you directly.
 
 How do you know if a `Branch` is changed?
-Either the `ann` or the `left` side has been changed or the `right` side has been changed.
+Either the `ann` or
+the `left` side has been changed or
+the `right` side has been changed.
 If either side is a `Leaf`, we know directly.
 If either side is a `Branch`, we have to continue recursing.
 
@@ -240,7 +251,7 @@ function Leaf(val, ann) {
     changed: ann,
   };
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return {
     ann: ann,
@@ -262,7 +273,7 @@ but here we are assuming that the given annotation is a boolean.
 While it is fine to have a boolean specific version,
 it breaks the `Functor` and `Extend` implementations we just wrote if we force the annotation to be a boolean.
 A `Functor` cannot work over a specific data type,
-it must work with every data type.
+it must work with every data type--similarly for `Extend`.
 
 ## Foldable
 
@@ -284,7 +295,7 @@ function Leaf(val, ann) {
     reduce: (f, acc) => f(acc, ann),
   };
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return {
     ann: ann,
@@ -301,7 +312,8 @@ function Branch(left, right, ann) {
 const changed = tree => tree.reduce((acc, x) => acc || x, false);
 ```
 
-Notice that we have moved `changed` to be a plain function rather than being a method on the `Tree`.
+Notice that we have made `changed` a plain function
+rather than being a method on the `Tree`.
 This makes things a bit easier to work with.
 
 Now, let us see if it works:
@@ -329,9 +341,9 @@ Seems like it works.
 
 Now we can use this in our implementation.
 
-Looking back at the implementation of `extend`,
-notice we always pass an entire `Tree val ann` to the given function.
-It takes the `Tree val ann` and produces a single value.
+Remember the implementation of `extend`,
+It takes the entire tree and passes it to the given function.
+The given function takes this tree and returns a single value.
 This is exactly what `reduce` does.
 So we can pass our `changed` function to `extend` and it will annotate the tree with its own changes.
 
@@ -399,7 +411,7 @@ function Leaf(val, ann) {
     reduce: (f, acc) => f(acc, ann),
   });
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return Object.assign(Tree, {
     ann: ann,
@@ -437,7 +449,7 @@ function Leaf(val, ann) {
     reduce: (f, acc) => f(acc, ann),
   }, Tree);
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return Object.assign({
     ann: ann,
@@ -509,7 +521,7 @@ function Leaf(val, ann) {
     reduce: (f, acc) => f(acc, ann),
   }, Tree);
 }
-// Branch : (Tree val ann) -> (Tree val ann) -> ann -> Tree val ann
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
   return Object.assign({
     ann: ann,

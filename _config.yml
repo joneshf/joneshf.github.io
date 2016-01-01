@@ -6,6 +6,7 @@ redcarpet:
     - autolink
     - fenced_code_blocks
     - no_intra_emphasis
+    - smart
     - strikethrough
     - superscript
     - tables
