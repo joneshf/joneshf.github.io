@@ -342,7 +342,7 @@ Seems like it works.
 Now we can use this in our implementation.
 
 Remember the implementation of `extend`,
-It takes the entire tree and passes it to the given function.
+it takes the entire tree and passes it to the given function.
 The given function takes this tree and returns a single value.
 This is exactly what `reduce` does.
 So we can pass our `changed` function to `extend` and it will annotate the tree with its own changes.
@@ -353,6 +353,8 @@ So we can pass our `changed` function to `extend` and it will annotate the tree 
 > const l3 = Leaf(3, true);
 > const b1 = Branch(l1, l2, false);
 > const b2 = Branch(b1, l3, false);
+> b2.toString();
+'Branch(Branch(Leaf(1, false), Leaf(2, false), false), Leaf(3, true), false)'
 > b2.extend(changed).toString();
 'Branch(Branch(Leaf(1, false), Leaf(2, false), false), Leaf(3, true), true)'
 ```
@@ -391,29 +393,22 @@ Any.empty = () => Any(false);
 So if we had all of the annotations in the tree as `Any`s,
 we could reduce over the tree using the `Monoid` interface.
 This function has a name, [`fold`][fold] in Haskell.
-Let us implement this function on a base object that both `Leaf` and `Branch` extend.
 
 ```js
-// Tree : Tree val ann
-const Tree = {
-  fold: function(Monoid) {
-    return this.reduce((acc, x) => acc.concat(x), Monoid.empty());
-  },
-};
 // Leaf : val -> ann -> Tree val ann
 function Leaf(val, ann) {
-  return Object.assign(Tree, {
+  return {
     ann: ann,
     val: val,
     toString: () => `Leaf(${val}, ${ann})`,
     map: f => Leaf(val, f(ann)),
     extend: f => Leaf(val, f(Leaf(val, ann))),
     reduce: (f, acc) => f(acc, ann),
-  });
+  };
 }
 // Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
-  return Object.assign(Tree, {
+  return {
     ann: ann,
     left: left,
     right: right,
@@ -422,36 +417,34 @@ function Branch(left, right, ann) {
     extend: f =>
       Branch(left.extend(f), right.extend(f), f(Branch(left, right, ann))),
     reduce: (f, acc) => right.reduce(f, left.reduce(f, f(acc, ann))),
-  });
+  };
 }
+// fold : (Monoid m, Foldable f) => m -> f m -> m
+const fold = (Monoid, Foldable) =>
+  Foldable.reduce((acc, x) => acc.concat(x), Monoid.empty())
 ```
 
-Note that since there is no compiler for js,
+Note that since there is no type system for js,
 we have to explicitly state which `Monoid` we want to use.
+Whereas a halfway decent type system would be able to infer this from the `Foldable` argument or the return type.
 
-We can put these together to make our changed function clearer.
+We can put these together to make our `changed` function clearer.
 
 ```js
-// Tree : Tree val ann
-const Tree = {
-  fold: function(Monoid) {
-    return this.reduce((acc, x) => acc.concat(x), Monoid.empty());
-  },
-};
 // Leaf : val -> ann -> Tree val ann
 function Leaf(val, ann) {
-  return Object.assign({
+  return {
     ann: ann,
     val: val,
     toString: () => `Leaf(${val}, ${ann})`,
     map: f => Leaf(val, f(ann)),
     extend: f => Leaf(val, f(Leaf(val, ann))),
     reduce: (f, acc) => f(acc, ann),
-  }, Tree);
+  };
 }
 // Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
-  return Object.assign({
+  return {
     ann: ann,
     left: left,
     right: right,
@@ -460,7 +453,7 @@ function Branch(left, right, ann) {
     extend: f =>
       Branch(left.extend(f), right.extend(f), f(Branch(left, right, ann))),
     reduce: (f, acc) => right.reduce(f, left.reduce(f, f(acc, ann))),
-  }, Tree);
+  };
 }
 // Any : Bool -> Any
 function Any(bool) {
@@ -470,8 +463,11 @@ function Any(bool) {
   };
 }
 Any.empty = () => Any(false);
+// fold : (Monoid m, Foldable f) => m -> f m -> m
+const fold = (Monoid, Foldable) =>
+  Foldable.reduce((acc, x) => acc.concat(x), Monoid.empty())
 // changed : Tree val Bool -> Bool
-const changed = tree => tree.map(Any).fold(Any).bool;
+const changed = tree => fold(Any, tree.map(Any)).bool;
 ```
 
 And we can see it in action:
@@ -482,6 +478,8 @@ And we can see it in action:
 > const l3 = Leaf(3, true);
 > const b1 = Branch(l1, l2, false);
 > const b2 = Branch(b1, l3, false);
+> b2.toString();
+'Branch(Branch(Leaf(1, false), Leaf(2, false), false), Leaf(3, true), false)'
 > b2.extend(changed).toString();
 'Branch(Branch(Leaf(1, false), Leaf(2, false), false), Leaf(3, true), true)'
 ```
@@ -497,33 +495,21 @@ We are iterating the tree twice, when before we iterated it once.
 We can make this have the same efficiency as before if we look for more help from Haskell.
 There is a function [`foldMap`][foldMap] that does exactly these two iterations in one go.
 
-Let us add this to our `Tree` object.
-
 ```js
-const R = require('ramda');
-// Tree : Tree val ann
-const Tree = {
-  fold: function(Monoid) {
-    return this.reduce((acc, x) => acc.concat(x), Monoid.empty());
-  },
-  foldMap: R.curry(function(Monoid, f) {
-    return this.reduce((acc, x) => acc.concat(f(x)), Monoid.empty());
-  }),
-};
 // Leaf : val -> ann -> Tree val ann
 function Leaf(val, ann) {
-  return Object.assign({
+  return {
     ann: ann,
     val: val,
     toString: () => `Leaf(${val}, ${ann})`,
     map: f => Leaf(val, f(ann)),
     extend: f => Leaf(val, f(Leaf(val, ann))),
     reduce: (f, acc) => f(acc, ann),
-  }, Tree);
+  };
 }
 // Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
 function Branch(left, right, ann) {
-  return Object.assign({
+  return {
     ann: ann,
     left: left,
     right: right,
@@ -532,7 +518,7 @@ function Branch(left, right, ann) {
     extend: f =>
       Branch(left.extend(f), right.extend(f), f(Branch(left, right, ann))),
     reduce: (f, acc) => right.reduce(f, left.reduce(f, f(acc, ann))),
-  }, Tree);
+  };
 }
 // Any : Bool -> Any
 function Any(bool) {
@@ -542,12 +528,63 @@ function Any(bool) {
   };
 }
 Any.empty = () => Any(false);
+// fold : (Monoid m, Foldable f) => m -> f m -> m
+const fold = (Monoid, Foldable) =>
+  Foldable.reduce((acc, x) => acc.concat(x), Monoid.empty())
+// foldMap : (Monoid m, Foldable f) => m -> (a -> m) -> f a -> m
+const foldMap = (Monoid, f, Foldable) =>
+  Foldable.reduce((acc, x) => acc.concat(f(x)), Monoid.empty())
 // changed : Tree val Bool -> Bool
-const changed = tree => tree.foldMap(Any, Any).bool;
+const changed = tree => foldMap(Any, Any, tree).bool;
 ```
 
-The fact that we pass `Any` twice is an unfortunate side effect of
-not having a compiler to take care of this kind of boiler plate for us.
+The fact that we pass `Any` twice is a coincidence that we are using the `Any` function as the `Monoid` and also to create our value.
+We are not forced to pass the exact same value to both parameters.
+
+`fold` and `foldMap` look almost identical.
+We can actually write `fold` in terms of `foldMap` by passing the identity function to `foldMap`.
+
+```js
+// Leaf : val -> ann -> Tree val ann
+function Leaf(val, ann) {
+  return {
+    ann: ann,
+    val: val,
+    toString: () => `Leaf(${val}, ${ann})`,
+    map: f => Leaf(val, f(ann)),
+    extend: f => Leaf(val, f(Leaf(val, ann))),
+    reduce: (f, acc) => f(acc, ann),
+  };
+}
+// Branch : Tree val ann -> Tree val ann -> ann -> Tree val ann
+function Branch(left, right, ann) {
+  return {
+    ann: ann,
+    left: left,
+    right: right,
+    toString: () => `Branch(${left}, ${right}, ${ann})`,
+    map: f => Branch(left.map(f), right.map(f), f(ann)),
+    extend: f =>
+      Branch(left.extend(f), right.extend(f), f(Branch(left, right, ann))),
+    reduce: (f, acc) => right.reduce(f, left.reduce(f, f(acc, ann))),
+  };
+}
+// Any : Bool -> Any
+function Any(bool) {
+  return {
+    bool: bool,
+    concat: a => Any(bool || a.bool),
+  };
+}
+Any.empty = () => Any(false);
+// foldMap : (Monoid m, Foldable f) => m -> (a -> m) -> f a -> m
+const foldMap = (Monoid, f, Foldable) =>
+  Foldable.reduce((acc, x) => acc.concat(f(x)), Monoid.empty())
+// fold : (Monoid m, Foldable f) => m -> f m -> m
+const fold = (Monoid, Foldable) => foldMap(Monoid, x => x, Foldable));
+// changed : Tree val Bool -> Bool
+const changed = tree => foldMap(Any, Any, tree).bool;
+```
 
 Once again, we can see it in action:
 
@@ -557,6 +594,8 @@ Once again, we can see it in action:
 > const l3 = Leaf(3, true);
 > const b1 = Branch(l1, l2, false);
 > const b2 = Branch(b1, l3, false);
+> b2.toString();
+'Branch(Branch(Leaf(1, false), Leaf(2, false), false), Leaf(3, true), false)'
 > b2.extend(changed).toString();
 'Branch(Branch(Leaf(1, false), Leaf(2, false), false), Leaf(3, true), true)'
 ```
