@@ -1,16 +1,5 @@
 name: Yet another site
-markdown: redcarpet
-
-redcarpet:
-  extensions:
-    - autolink
-    - fenced_code_blocks
-    - no_intra_emphasis
-    - smart
-    - strikethrough
-    - superscript
-    - tables
-    - with_toc_data
+markdown: kramdown
 
 kramdown:
   input: GFM
