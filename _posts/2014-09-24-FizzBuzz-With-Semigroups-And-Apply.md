@@ -197,5 +197,5 @@ module FB where
     where go n = maybe (show n) id (fizzBuzzBazz n)
 ```
 
-[fizz-monoid]: http://barkmadley.com/2009/01/22/fun-with-fizzbuzz-and-haskell-monoids.html
+[fizz-monoid]: https://barkmadley.com/2009/01/22/fun-with-fizzbuzz-and-haskell-monoids/
 [semigroups]: https://hackage.haskell.org/package/semigroups
