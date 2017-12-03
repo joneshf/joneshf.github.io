@@ -9,3 +9,5 @@ kramdown:
     coderay_css: class
 
 highlighter: rouge
+
+remote_theme: TaylanTatli/Moon
