@@ -5,5 +5,3 @@ kramdown:
   input: GFM
 
 highlighter: rouge
-
-remote_theme: TaylanTatli/Moon
